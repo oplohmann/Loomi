@@ -3,7 +3,11 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <!-- Had to go with maven because at the time of writing Gradle did not yet support preview features of JDK19. -->
+    <!--
+    Had to go with maven because at the time of writing Gradle did not yet support preview features of JDK19.
+    Requires JDK19 including project Loom preview features which can be downloaded from here: https://jdk.java.net/loom/
+    Requires IntelliJ 2022.2.3 that has support for JDK19.
+    -->
 
     <modelVersion>4.0.0</modelVersion>
 
