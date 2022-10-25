@@ -1,5 +1,7 @@
 package org.objectscape.loomi;
 
+import java.util.function.Consumer;
+
 public class Loomi {
 
     public static void startVirtual(Runnable runnable) {
@@ -20,4 +22,26 @@ public class Loomi {
         new Thread(runnable).start();
     }
 
+    public static void select(Consumer<ChannelSelection> action) {
+        var selection = new ChannelSelection();
+        var proceed = true;
+        var firstIteration = true;
+
+        while (proceed) {
+            if(!firstIteration && selection.isAllChannelsClosed()) {
+                break;
+            }
+            if(!firstIteration && selection.isAllChannelsEmpty()) {
+                // Deadlock: throw exception
+                break;
+            }
+            action.accept(selection);
+            firstIteration = false;
+            if(selection.isEmpty()) {
+                return;
+            }
+        }
+
+        selection.done();
+    }
 }

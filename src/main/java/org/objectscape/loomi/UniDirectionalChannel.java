@@ -4,12 +4,13 @@ import java.util.function.Consumer;
 
 public abstract class UniDirectionalChannel<E> {
 
-    protected final Channel channel;
+    protected final Channel<E> channel;
 
-    public UniDirectionalChannel(Channel channel) {
+    public UniDirectionalChannel(Channel<E> channel) {
         this.channel = channel;
     }
 
     public void forEach(Consumer<? super E> action) {
     }
+
 }
