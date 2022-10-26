@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objectscape.loomi.core.ChannelWithHooksForTest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.objectscape.loomi.Loomi.select;
 import static org.objectscape.loomi.Loomi.startVirtual;
 
@@ -109,8 +108,7 @@ public class SelectTest {
             });
 
             receiveChannel2.onReceive(selection, element -> {
-                System.out.println("Channel 2 received element: " + element);
-                list.add(element);
+                assertFalse(true, "must never be called");
             });
 
             selection.onDefault(() -> {
