@@ -17,28 +17,31 @@ public class SelectTest {
     void selectEmpty() {
 
         var channel1 = new ChannelWithHooksForTest<Integer>();
-        var sendChannel1 = channel1.sendChannel();
         var receiveChannel1 = channel1.receiveChannel();
 
         var channel2 = new ChannelWithHooksForTest<Integer>();
-        var sendChannel2 = channel2.sendChannel();
         var receiveChannel2 = channel2.receiveChannel();
 
         var list = new ConcurrentLinkedQueue<Integer>();
+        var deadlockExceptionOccurred = false;
 
-        select(selection -> {
+        try {
+            select(selection -> {
 
-            receiveChannel1.onReceive(selection, (item) -> {
-                list.add(item);
+                receiveChannel1.onReceive(selection, (item) -> {
+                    list.add(item);
+                });
+
+                receiveChannel2.onReceive(selection, (item) -> {
+                    list.add(item);
+                });
+
             });
+        } catch (DeadlockException e) {
+            deadlockExceptionOccurred = true;
+        }
 
-            receiveChannel2.onReceive(selection, (item) -> {
-                list.add(item);
-            });
-
-        });
-
-        System.out.println("done");
+        assertTrue(deadlockExceptionOccurred);
     }
 
     @Test
@@ -92,12 +95,12 @@ public class SelectTest {
         var list = new ConcurrentLinkedQueue<Integer>();
 
         startVirtual(() -> {
-            sleep(10_500);
+            sleep(1_050);
             sendChannel1.send(1);
         });
 
         select(selection -> {
-            sleep(1_000);
+            sleep(100);
 
             receiveChannel1.onReceive(selection, element -> {
                 System.out.println("Channel 1 received element: " + element);
