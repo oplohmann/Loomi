@@ -7,13 +7,19 @@ public class ChannelSelection {
 
     private Set<ReceiveChannel> channelsInSelection = new HashSet<>();
     private Set<ReceiveChannel> channelsInSelectionAndEmpty = new HashSet<>();
-
     private Set<ReceiveChannel> channelsInSelectionAndClosed = new HashSet<>();
+
+    private boolean firstIteration = true;
+    private boolean done = false;
+
+    private boolean defaultExists = false;
     public <E> void addChannel(ReceiveChannel<E> receiveChannel) {
-        channelsInSelection.add(receiveChannel);
+        if(firstIteration) {
+            channelsInSelection.add(receiveChannel);
+        }
     }
 
-    public boolean isEmpty() {
+    public boolean isNoChannelsDefined() {
         return channelsInSelection.isEmpty();
     }
 
@@ -29,7 +35,7 @@ public class ChannelSelection {
         return channelsInSelection.size() == channelsInSelectionAndClosed.size();
     }
 
-    public void done() {
+    protected void clear() {
         // selection finished execution, free all resources to help the GC
         channelsInSelection = new HashSet<>();
         channelsInSelectionAndEmpty = new HashSet<>();
@@ -38,6 +44,36 @@ public class ChannelSelection {
 
     public boolean isAllChannelsEmpty() {
         return channelsInSelection.size() == channelsInSelectionAndEmpty.size();
+    }
+
+    public boolean isFirstIteration() {
+        return firstIteration;
+    }
+
+    public void setFirstIteration(boolean firstIteration) {
+        this.firstIteration = firstIteration;
+    }
+
+    public void done() {
+        done = true;
+    }
+
+    protected boolean isDone() {
+        return done;
+    }
+
+    public void onDefault(Runnable runnable) {
+        defaultExists = true;
+        if(isDone()) {
+            return;
+        }
+        if(isAllChannelsEmpty()) {
+            runnable.run();
+        }
+    }
+
+    protected boolean isDefaultExists() {
+        return defaultExists;
     }
 
 }

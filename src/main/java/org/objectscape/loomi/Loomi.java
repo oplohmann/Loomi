@@ -24,24 +24,25 @@ public class Loomi {
 
     public static void select(Consumer<ChannelSelection> action) {
         var selection = new ChannelSelection();
-        var proceed = true;
-        var firstIteration = true;
 
-        while (proceed) {
-            if(!firstIteration && selection.isAllChannelsClosed()) {
+        while (!selection.isDone()) {
+
+            if(!selection.isFirstIteration() && selection.isAllChannelsClosed()) {
                 break;
             }
-            if(!firstIteration && selection.isAllChannelsEmpty()) {
+            if(!selection.isFirstIteration() && !selection.isDefaultExists() && selection.isAllChannelsEmpty()) {
                 // Deadlock: throw exception
                 break;
             }
+
             action.accept(selection);
-            firstIteration = false;
-            if(selection.isEmpty()) {
-                return;
+            selection.setFirstIteration(false);
+
+            if(selection.isNoChannelsDefined()) {
+                break;
             }
         }
 
-        selection.done();
+        selection.clear();
     }
 }

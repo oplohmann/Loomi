@@ -17,6 +17,10 @@ public class ReceiveChannel<E> extends UniDirectionalChannel<E> {
     }
 
     public void onReceive(ChannelSelection selection, Consumer<E> elementConsumer) {
+        if(selection.isDone()) {
+            return;
+        }
+
         channel.closedLock.readLock().lock();
 
         try {
@@ -39,7 +43,7 @@ public class ReceiveChannel<E> extends UniDirectionalChannel<E> {
             channel.closedLock.readLock().unlock();
         }
 
-        if(selection.isEmpty()) {
+        if(selection.isNoChannelsDefined()) {
             return;
         }
     }
