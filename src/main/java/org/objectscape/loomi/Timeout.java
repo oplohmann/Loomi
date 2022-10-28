@@ -32,6 +32,7 @@ public class Timeout {
 
     public void restart() {
         timeoutGard.release();
+        timeoutGard.drainPermits();
         start();
     }
 
