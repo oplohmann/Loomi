@@ -3,12 +3,14 @@ package org.objectscape.loomi;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Timeout {
 
     private long duration;
     private TimeUnit timeUnit;
     private Semaphore timeoutGard = new Semaphore(0);
+    private AtomicBoolean cancelled = new AtomicBoolean(false);
 
     private Runnable actionAfterTimeout;
 
@@ -22,7 +24,9 @@ public class Timeout {
         Loomi.startVirtual(() -> {
             try {
                 if(!timeoutGard.tryAcquire(1, duration, timeUnit)) {
-                    actionAfterTimeout.run();
+                    if(!cancelled.getAndSet(false)) { // TODO: create test case for this
+                        actionAfterTimeout.run();
+                    }
                 }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -31,13 +35,18 @@ public class Timeout {
     }
 
     public void restart() {
-        timeoutGard.release();
-        timeoutGard.drainPermits();
-        start();
+        synchronized (timeoutGard) {
+            cancelled.compareAndSet(false, true);
+            timeoutGard.release();
+            timeoutGard.drainPermits();
+            start();
+        }
     }
 
-    public void release() {
-        timeoutGard.release();
+    protected void release() {
+        synchronized (timeoutGard) {
+            timeoutGard.release();
+        }
     }
 
 }

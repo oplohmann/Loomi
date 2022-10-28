@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.objectscape.loomi.Loomi.startVirtual;
 
 public class TimeoutTest {
 
@@ -84,13 +85,13 @@ public class TimeoutTest {
 
     @Test
     @Disabled // no regression test - just to make sure that things were understood correctly
-    void wannaSee() throws InterruptedException {
+    void verifyCorrectUnderstandingSemaphores() throws InterruptedException {
         Semaphore semaphore = new Semaphore(1);
         var timeoutOccurred = new AtomicBoolean(false);
         var timeoutCanceled = new AtomicBoolean(false);
 
         Runnable timeoutAction = () -> {
-            Loomi.startVirtual(() -> {
+            startVirtual(() -> {
                 try {
                     if (!semaphore.tryAcquire(1, 50, TimeUnit.MILLISECONDS)) {
                         timeoutOccurred.compareAndSet(false, true);
@@ -106,7 +107,7 @@ public class TimeoutTest {
         timeoutAction.run();
 
         Thread.sleep(10);
-        semaphore.release();
+        semaphore.drainPermits();
 
         Thread.sleep(10);
         assertFalse(timeoutOccurred.get());
@@ -114,7 +115,6 @@ public class TimeoutTest {
 
         timeoutOccurred.set(false);
         timeoutCanceled.set(false);
-        semaphore.drainPermits();
         timeoutAction.run();
 
         Thread.sleep(80);
