@@ -27,24 +27,29 @@ public class Loomi {
 
         try {
             while (!selection.isDone()) {
-
-                if(!selection.isFirstIteration() && selection.isAllChannelsClosed()) {
+                if (isLeaveSelect(selection)) {
                     break;
                 }
-                if(!selection.isFirstIteration() && !selection.isDefaultExists() && selection.isAllChannelsEmpty()) {
-                    throw new DeadlockException("all channels in selection are empty: deadlock!");
-                }
-
                 action.accept(selection);
                 selection.setFirstIteration(false);
-
-                if(selection.isNoChannelsDefined()) {
-                    break;
-                }
             }
         } finally {
             selection.clear();
         }
 
+    }
+
+    private static boolean isLeaveSelect(ChannelSelection selection) {
+        if(selection.isFirstIteration()) {
+            return false;
+        }
+        if(selection.isNoChannelsDefined() || selection.isAllChannelsClosed()) {
+            return true;
+        }
+        if(!selection.isDefaultExists() && selection.isAllChannelsEmpty()) {
+            // This is what select in Go does in this situation, keep it the same for Loomi to be predictive in its behavior
+            throw new DeadlockException("all channels in selection are empty: deadlock!");
+        }
+        return false;
     }
 }

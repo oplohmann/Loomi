@@ -36,7 +36,7 @@ public class ChannelSelection {
     }
 
     protected void clear() {
-        // selection finished execution, free all resources to help the GC
+        // selection finished execution, free all resources to help the GC reclaim unreferenced channels
         channelsInSelection = new HashSet<>();
         channelsInSelectionAndEmpty = new HashSet<>();
         channelsInSelectionAndClosed = new HashSet<>();
