@@ -1,5 +1,5 @@
 # Loomi
-Little framework to have Go-style concurrency in Java using channels and virtual threads from project Loom (JDK19 with preview features or newer)
+Little framework to have Go-style concurrency in Java using channels and virtual threads from project Loom (see https://openjdk.org/projects/loom/).
 
 Requirements:
 
