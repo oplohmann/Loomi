@@ -5,6 +5,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.objectscape.loomi.Loomi.startVirtual;
+
 public class Timeout {
 
     private long duration;
@@ -21,7 +23,7 @@ public class Timeout {
     }
 
     public void start() {
-        Loomi.startVirtual(() -> {
+        startVirtual(() -> {
             try {
                 if(!timeoutGard.tryAcquire(1, duration, timeUnit)) {
                     if(!cancelled.getAndSet(false)) { // TODO: create test case for this
@@ -41,6 +43,11 @@ public class Timeout {
             timeoutGard.drainPermits();
             start();
         }
+    }
+
+    public void cancel() {
+        cancelled.compareAndSet(false, true);
+        timeoutGard.release();
     }
 
     protected void release() {

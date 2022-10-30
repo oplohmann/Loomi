@@ -2,6 +2,7 @@ package org.objectscape.loomi;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChannelSelection {
@@ -9,6 +10,8 @@ public class ChannelSelection {
     private Set<ReceiveChannel> channelsInSelection = new HashSet<>();
     private Set<ReceiveChannel> channelsInSelectionAndEmpty = new HashSet<>();
     private Set<ReceiveChannel> channelsInSelectionAndClosed = new HashSet<>();
+
+    private Set<Timeout> timeouts = new HashSet<>();
 
     private boolean firstIteration = true;
     private AtomicBoolean done = new AtomicBoolean(false);
@@ -73,6 +76,12 @@ public class ChannelSelection {
 
     protected boolean isDefaultExists() {
         return defaultExists.get();
+    }
+
+    public void onTimeout(int duration, TimeUnit timeUnit, Runnable runnable) {
+        var timeout = new Timeout(duration, timeUnit, runnable);
+        timeouts.add(timeout);
+        timeout.start();
     }
 
 }

@@ -1,6 +1,7 @@
 package org.objectscape.loomi;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assertions;
@@ -190,7 +191,39 @@ public class SelectTest {
 
     @Test
     void exitAfterFirstChannelReceivedInput() {
-        // same as 1st example https://golangbot.com/select/
+        /*
+        same as 1st example https://golangbot.com/select/
+        package main
+
+        import (
+            "fmt"
+            "time"
+        )
+
+        func server1(ch chan string) {
+            time.Sleep(6 * time.Second)
+            ch <- "from server1"
+        }
+
+        func server2(ch chan string) {
+            time.Sleep(3 * time.Second)
+            ch <- "from server2"
+        }
+
+        func main() {
+            output1 := make(chan string)
+            output2 := make(chan string)
+            go server1(output1)
+            go server2(output2)
+            select {
+                case s1 := <-output1:
+                    fmt.Println(s1)
+                case s2 := <-output2:
+                    fmt.Println(s2)
+            }
+        }
+         */
+
         var channel1 = new ChannelWithHooksForTest<Integer>();
         var sendChannel1 = channel1.sendChannel();
         var receiveChannel1 = channel1.receiveChannel();
@@ -216,7 +249,7 @@ public class SelectTest {
             });
 
             receiveChannel2.onReceive(selection, element -> {
-                assertTrue(false, "should never be called, because selection.done(); called before");
+                assertTrue(false, "should never be called, because select statement is finished once any channel received an any");
             });
 
         });
@@ -227,7 +260,37 @@ public class SelectTest {
 
     @Test
     void selectWithDefaultAndReturn() {
-        // same as 2nd example https://golangbot.com/select/
+        /*
+        same as 2nd example here: https://golangbot.com/select/
+
+        package main
+
+        import (
+            "fmt"
+            "time"
+        )
+
+        func process(ch chan string) {
+            time.Sleep(10500 * time.Millisecond)
+            ch <- "process successful"
+        }
+
+        func main() {
+            ch := make(chan string)
+            go process(ch)
+            for {
+                time.Sleep(1000 * time.Millisecond)
+                select {
+                    case v := <-ch:
+                        fmt.Println("received value: ", v)
+                        return // take note of this return here !!
+                    default:
+                    fmt.Println("no value received")
+                }
+            }
+        }
+         */
+
         var channel1 = new ChannelWithHooksForTest<Integer>();
         var sendChannel1 = channel1.sendChannel();
         var receiveChannel1 = channel1.receiveChannel();
@@ -249,7 +312,7 @@ public class SelectTest {
                 receiveChannel1.onReceive(selection, element -> {
                     System.out.println("Channel 1 received element: " + element);
                     list.add(element);
-                    selection.done();
+                    selection.done(); // workaround to have same effect as return
                     done.compareAndSet(false, true);
                 });
 
@@ -268,10 +331,120 @@ public class SelectTest {
         assertEquals(9, list.stream().filter(each -> each == 0).count());
     }
 
+    @Test
+    void selectWithDefaultsTwoChannels() {
+
+        var channel1 = new ChannelWithHooksForTest<Integer>();
+        var sendChannel1 = channel1.sendChannel();
+        var receiveChannel1 = channel1.receiveChannel();
+
+        var channel2 = new ChannelWithHooksForTest<Integer>();
+        var sendChannel2 = channel2.sendChannel();
+        var receiveChannel2 = channel2.receiveChannel();
+
+        var list = new ConcurrentLinkedQueue<Integer>();
+
+        startVirtual(() -> {
+            sendChannel1.send(1);
+            sleep(50);
+            sendChannel2.send(2);
+        });
+
+        for (int i = 0; i < 3; i++) {
+            select(selection -> {
+                sleep(100);
+
+                receiveChannel1.onReceive(selection, element -> {
+                    System.out.println("Channel 1 received element: " + element);
+                    list.add(element);
+                });
+
+                receiveChannel2.onReceive(selection, element -> {
+                    System.out.println("Channel 2 received element: " + element);
+                    list.add(element);
+                });
+
+                selection.onDefault(() -> {
+                    System.out.println("No element received");
+                    list.add(0);
+                });
+            });
+        }
+
+        assertEquals(3, list.size());
+        assertTrue(list.contains(1));
+        assertTrue(list.contains(2));
+        assertTrue(list.contains(0));
+    }
+
+    @Test
+    @Disabled // not yet implemented
+    void selectWithTimeouts() {
+        /*
+        Taken from this example: https://gobyexample.com/timeouts (but with unbounded channels)
+
+        c1 := make(chan string)
+        go func() {
+            time.Sleep(2 * time.Second)
+            c1 <- "result 1"
+        }()
+
+        select {
+            case res := <-c1:
+                fmt.Println(res)
+            case <-time.After(1 * time.Second):
+                fmt.Println("timeout 1")
+        }
+
+        c2 := make(chan string)
+        go func() {
+            time.Sleep(2 * time.Second)
+            c2 <- "result 2"
+        }()
+
+        select {
+            case res := <-c2:
+                fmt.Println(res)
+            case <-time.After(3 * time.Second):
+                fmt.Println("timeout 2")
+        }
+        */
+
+        var channel1 = new ChannelWithHooksForTest<Integer>();
+        var sendChannel1 = channel1.sendChannel();
+        var receiveChannel1 = channel1.receiveChannel();
+
+        var list1 = new ConcurrentLinkedQueue<Integer>();
+        var listTimeout = new ConcurrentLinkedQueue<Integer>();
+
+        startVirtual(() -> {
+            sleep(2000);
+            sendChannel1.send(1);
+        });
+
+        select(selection -> {
+
+            receiveChannel1.onReceive(selection, element -> {
+                System.out.println("Channel 1 received element: " + element);
+                list1.add(element);
+            });
+
+            selection.onTimeout(1, TimeUnit.SECONDS, () -> {
+                System.out.println("timeout period expired");
+                listTimeout.add(0);
+            });
+        });
+
+        System.out.println("done");
+
+    }
+
     private static void sleep(int millis) {
         try {
             Thread.sleep(millis);
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
