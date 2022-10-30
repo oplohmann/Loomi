@@ -31,12 +31,23 @@ public class Loomi {
                     break;
                 }
                 action.accept(selection);
+                handleTimeouts(selection);
                 selection.setFirstIteration(false);
             }
         } finally {
             selection.clear();
         }
 
+    }
+
+    private static void handleTimeouts(ChannelSelection selection) {
+        if(selection.isFirstIteration() || selection.isNoTimeouts()) {
+            return;
+        }
+        // prototype only - correct synchronization implemented in a next step
+        selection.getChannelsInSelection().forEach(channel -> {
+            channel.addSendListener(selection);
+        });
     }
 
     private static boolean isLeaveSelect(ChannelSelection selection) {

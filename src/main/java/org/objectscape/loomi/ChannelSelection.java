@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ChannelSelection {
+public class ChannelSelection implements SendListener {
 
     private Set<ReceiveChannel> channelsInSelection = new HashSet<>();
     private Set<ReceiveChannel> channelsInSelectionAndEmpty = new HashSet<>();
@@ -79,9 +79,24 @@ public class ChannelSelection {
     }
 
     public void onTimeout(int duration, TimeUnit timeUnit, Runnable runnable) {
-        var timeout = new Timeout(duration, timeUnit, runnable);
-        timeouts.add(timeout);
-        timeout.start();
+        if(isFirstIteration()) {
+            var timeout = new Timeout(duration, timeUnit, runnable);
+            timeouts.add(timeout);
+            timeout.start();
+        }
+    }
+
+    public boolean isNoTimeouts() {
+        return timeouts.isEmpty();
+    }
+
+    public Set<ReceiveChannel> getChannelsInSelection() {
+        return channelsInSelection;
+    }
+
+    @Override
+    public void notifyItemWasSent() {
+
     }
 
 }

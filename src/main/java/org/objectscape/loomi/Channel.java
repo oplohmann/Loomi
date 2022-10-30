@@ -1,6 +1,8 @@
 package org.objectscape.loomi;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,6 +13,9 @@ public class Channel<E> {
     protected final LinkedTransferQueue<ChannelElement<E>> queue = new LinkedTransferQueue<>();
     private final SendChannel<E> sendChannel = new SendChannel<>(this);
     private final ReceiveChannel<E> receiveChannel = new ReceiveChannel<>(this);
+
+    // TODO: Think about whether this has to be a concurrent list or whatever synchronization needs to be done
+    private final List<SendListener> sendListeners = new ArrayList<>();
 
     protected final ReentrantReadWriteLock closedLock = new ReentrantReadWriteLock();
 
@@ -35,6 +40,8 @@ public class Channel<E> {
                 throw new ChannelClosedException("channel closed");
             }
             queue.add(new ChannelOpenElement(element));
+            sendListeners.forEach(each -> each.notifyItemWasSent());
+
         } finally {
             closedLock.readLock().unlock();
         }
@@ -99,4 +106,7 @@ public class Channel<E> {
         // redefine in subclass as appropriate
     }
 
+    public void addSendListener(ChannelSelection selection) {
+        sendListeners.add(selection);
+    }
 }

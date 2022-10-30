@@ -49,4 +49,15 @@ public class ReceiveChannel<E> extends UniDirectionalChannel<E> {
         }
     }
 
+    public boolean addSendListener(ChannelSelection selection) {
+        channel.closedLock.readLock().lock();
+
+        try {
+            channel.addSendListener(selection);
+            return !channel.queue.isEmpty();
+        } finally {
+            channel.closedLock.readLock().unlock();
+        }
+    }
+
 }
