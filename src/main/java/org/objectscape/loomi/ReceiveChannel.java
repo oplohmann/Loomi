@@ -38,6 +38,7 @@ public class ReceiveChannel<E> extends UniDirectionalChannel<E> {
                 selection.channelEmpty(this);
             } else {
                 elementConsumer.accept(channelElement.get());
+                selection.done();
             }
         } finally {
             channel.closedLock.readLock().unlock();

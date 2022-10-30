@@ -2,6 +2,7 @@ package org.objectscape.loomi;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChannelSelection {
 
@@ -10,9 +11,9 @@ public class ChannelSelection {
     private Set<ReceiveChannel> channelsInSelectionAndClosed = new HashSet<>();
 
     private boolean firstIteration = true;
-    private boolean done = false;
+    private AtomicBoolean done = new AtomicBoolean(false);
 
-    private boolean defaultExists = false;
+    private AtomicBoolean defaultExists = new AtomicBoolean(false);
     public <E> void addChannel(ReceiveChannel<E> receiveChannel) {
         if(firstIteration) {
             channelsInSelection.add(receiveChannel);
@@ -55,25 +56,23 @@ public class ChannelSelection {
     }
 
     public void done() {
-        done = true;
+        done.compareAndSet(false, true);
     }
 
     protected boolean isDone() {
-        return done;
+        return done.get();
     }
 
     public void onDefault(Runnable runnable) {
-        defaultExists = true;
-        if(isDone()) {
-            return;
-        }
+        defaultExists.compareAndSet( false, true);
         if(isAllChannelsEmpty()) {
             runnable.run();
+            done();
         }
     }
 
     protected boolean isDefaultExists() {
-        return defaultExists;
+        return defaultExists.get();
     }
 
 }
