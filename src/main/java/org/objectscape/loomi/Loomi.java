@@ -40,6 +40,33 @@ public class Loomi {
 
     }
 
+    public static void selectNew(Consumer<ChannelSelectionNew> action) {
+        var selection = new ChannelSelectionNew();
+        action.accept(selection);
+
+        try {
+            if(selection.isLeaveSelect()) {
+                return;
+            }
+
+            if(tryReceiveOnArbitraryChannel(selection)) {
+                return;
+            }
+        } finally {
+            selection.clear();
+        }
+
+    }
+
+    private static boolean tryReceiveOnArbitraryChannel(ChannelSelectionNew selection) {
+        var nonEmptyChannel = selection.getArbitraryNonEmptyChannel();
+        if(nonEmptyChannel.isPresent()) {
+            // TODO: continue implementation
+            return true;
+        }
+        return false;
+    }
+
     private static void handleTimeouts(ChannelSelection selection) {
         if(selection.isFirstIteration() || selection.isNoTimeouts()) {
             return;
@@ -63,4 +90,20 @@ public class Loomi {
         }
         return false;
     }
+
+    private static boolean isLeaveSelectNew(ChannelSelectionNew selection) {
+        // TODO: re-implement for ChannelSelectionNew
+        /*
+        if(selection.isNoChannelsDefined() || selection.isAllChannelsClosed()) {
+            return true;
+        }
+        if(!selection.isDefaultExists() && selection.isAllChannelsEmpty()) {
+            // This is what select in Go does in this situation, keep it the same for Loomi to be predictive in its behavior
+            throw new DeadlockException("all channels in selection are empty: deadlock!");
+        }
+        return false;
+         */
+        return false; // kludge for now
+    }
+
 }

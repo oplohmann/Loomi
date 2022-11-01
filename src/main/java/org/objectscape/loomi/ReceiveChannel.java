@@ -49,6 +49,11 @@ public class ReceiveChannel<E> extends UniDirectionalChannel<E> {
         }
     }
 
+    public void onReceiveNew(ChannelSelectionNew selection, Consumer<E> elementConsumer) {
+        var isNonEmpty = channel.addSendListener(selection);
+        selection.storeChannel(channel, elementConsumer, isNonEmpty);
+    }
+
     public boolean addSendListener(ChannelSelection selection) {
         channel.closedLock.readLock().lock();
 

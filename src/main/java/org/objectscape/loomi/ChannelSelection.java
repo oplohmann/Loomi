@@ -95,7 +95,7 @@ public class ChannelSelection implements SendListener {
     }
 
     @Override
-    public void notifyItemWasSent() {
+    public void notifyItemWasSent(Channel channel) {
 
     }
 

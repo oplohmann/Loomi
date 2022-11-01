@@ -1,11 +1,8 @@
 package org.objectscape.loomi;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Channel<E> {
@@ -40,7 +37,7 @@ public class Channel<E> {
                 throw new ChannelClosedException("channel closed");
             }
             queue.add(new ChannelOpenElement(element));
-            sendListeners.forEach(each -> each.notifyItemWasSent());
+            sendListeners.forEach(each -> each.notifyItemWasSent(this));
 
         } finally {
             closedLock.readLock().unlock();
@@ -109,4 +106,16 @@ public class Channel<E> {
     public void addSendListener(ChannelSelection selection) {
         sendListeners.add(selection);
     }
+
+    public boolean addSendListener(ChannelSelectionNew selection) {
+        closedLock.readLock().lock();
+
+        try {
+            sendListeners.add(selection);
+            return !queue.isEmpty();
+        } finally {
+            closedLock.readLock().unlock();
+        }
+    }
+
 }
