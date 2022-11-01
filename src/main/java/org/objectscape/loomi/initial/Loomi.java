@@ -1,4 +1,4 @@
-package org.objectscape.loomi;
+package org.objectscape.loomi.initial;
 
 import java.util.function.Consumer;
 
@@ -49,18 +49,22 @@ public class Loomi {
                 return;
             }
 
-            if(selection.tryReceiveOnArbitraryChannel()) {
+            if(tryReceiveOnArbitraryChannel(selection)) {
                 return;
             }
-
-            if(selection.runDefaultBlock()) {
-                return;
-            }
-
         } finally {
             selection.clear();
         }
 
+    }
+
+    private static boolean tryReceiveOnArbitraryChannel(ChannelSelectionNew selection) {
+        var nonEmptyChannel = selection.getArbitraryNonEmptyChannel();
+        if(nonEmptyChannel.isPresent()) {
+            // TODO: continue implementation
+            return true;
+        }
+        return false;
     }
 
     private static void handleTimeouts(ChannelSelection selection) {

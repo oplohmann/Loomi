@@ -1,6 +1,7 @@
-package org.objectscape.loomi;
+package org.objectscape.loomi.initial;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -11,7 +12,7 @@ public class Channel<E> {
     private final ReceiveChannel<E> receiveChannel = new ReceiveChannel<>(this);
 
     // TODO: Think about whether this has to be a concurrent list or whatever synchronization needs to be done
-    private final Set<SendListener> sendListeners = new HashSet<>();
+    private final List<SendListener> sendListeners = new ArrayList<>();
 
     protected final ReentrantReadWriteLock closedLock = new ReentrantReadWriteLock();
 
@@ -44,34 +45,22 @@ public class Channel<E> {
     }
 
     public ChannelElement<E> receive() throws ChannelClosedException {
-        var optionalChannelElement = poll();
-        if(optionalChannelElement.isPresent()) {
-            return optionalChannelElement.get();
-        }
-
-        return queueTake();
-    }
-
-    protected Optional<ChannelElement<E>> poll() throws ChannelClosedException {
         closedLock.readLock().lock();
 
         try {
-            var item = queue.poll();
             if (closed) {
+                var item = queue.poll();
                 if(item != null && !item.isChannelEmptyAndClosed()) {
-                    return Optional.of(item);
+                    return item;
                 }
-                return Optional.of(ChannelClosedElement.getInstance());
+
+                return ChannelClosedElement.getInstance();
             }
-            if (item == null) {
-                return Optional.empty();
-            }
-            return Optional.of(item);
-        }
-        finally {
+        } finally {
             closedLock.readLock().unlock();
         }
 
+        return queueTake();
     }
 
     protected ChannelElement<E> queueTake() throws ChannelInterruptedException {
@@ -119,28 +108,14 @@ public class Channel<E> {
     }
 
     public boolean addSendListener(ChannelSelectionNew selection) {
-        synchronized (sendListeners) {
-            var isNewElement = sendListeners.add(selection);
-            assert isNewElement;
-        }
-
-        return !isEmpty();
-    }
-
-    public void removeListener(ChannelSelectionNew channelSelectionNew) {
-        synchronized (sendListeners) {
-            boolean found = sendListeners.remove(channelSelectionNew);
-            assert found;
-        }
-    }
-
-    protected boolean isEmpty() {
         closedLock.readLock().lock();
 
         try {
+            sendListeners.add(selection);
             return !queue.isEmpty();
         } finally {
             closedLock.readLock().unlock();
         }
     }
+
 }

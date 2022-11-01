@@ -3,12 +3,14 @@ package org.objectscape.loomi;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class ChannelSelectPair<E> {
+public class ChannelSelectItem {
 
     private final AtomicBoolean wasNonEmpty = new AtomicBoolean(false);
-    private final Consumer<E> elementConsumer;
+    private Consumer<?> elementConsumer;
+    private Channel<?> channel;
 
-    public ChannelSelectPair(Consumer<E> elementConsumer, boolean wasNonEmpty) {
+    public <E> ChannelSelectItem(Channel<?> channel, Consumer<?> elementConsumer, boolean wasNonEmpty) {
+        this.channel = channel;
         this.elementConsumer = elementConsumer;
         this.wasNonEmpty.compareAndSet(false, wasNonEmpty);
     }
@@ -21,8 +23,17 @@ public class ChannelSelectPair<E> {
         return wasNonEmpty.get();
     }
 
-    public Consumer<E> getElementConsumer() {
+    public Consumer<?> getElementConsumer() {
         return elementConsumer;
+    }
+
+    public Channel<?> getChannel() {
+        return channel;
+    }
+
+    public void clear() {
+        elementConsumer = null;
+        channel = null;
     }
 
 }

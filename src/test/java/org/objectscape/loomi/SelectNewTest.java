@@ -41,9 +41,19 @@ public class SelectNewTest {
                     list.add(element);
                 });
 
+                /*
+                TODO: test case that does again receiveChannel1.onReceiveNew --> must be rejected
+                 */
+
                 receiveChannel2.onReceiveNew(selection, element -> {
                     System.out.println("Channel 2 received element: " + element);
                     list.add(element);
+                });
+
+                // TODO: test case that exception is thrown in case that more than 1 default block is defined by the user.
+                selection.onDefault(() -> {
+                    System.out.println("No element received");
+                    list.add(0);
                 });
 
             });

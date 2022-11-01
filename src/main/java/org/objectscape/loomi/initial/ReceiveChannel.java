@@ -1,4 +1,4 @@
-package org.objectscape.loomi;
+package org.objectscape.loomi.initial;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -50,8 +50,6 @@ public class ReceiveChannel<E> extends UniDirectionalChannel<E> {
     }
 
     public void onReceiveNew(ChannelSelectionNew selection, Consumer<E> elementConsumer) {
-        // Don't immediately invoke elementConsumer if channel has an element, because
-        // in case of several non-empty channels which one is selected must be non-deterministic.
         var isNonEmpty = channel.addSendListener(selection);
         selection.storeChannel(channel, elementConsumer, isNonEmpty);
     }
