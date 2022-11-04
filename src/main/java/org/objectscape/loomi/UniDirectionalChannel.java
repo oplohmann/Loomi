@@ -10,7 +10,4 @@ public abstract class UniDirectionalChannel<E> {
         this.channel = channel;
     }
 
-    public void forEach(Consumer<? super E> action) {
-    }
-
 }

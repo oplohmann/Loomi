@@ -1,12 +1,19 @@
 package org.objectscape.loomi;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.objectscape.loomi.core.ChannelWithHooksForTest;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.objectscape.loomi.core.ChannelWithHooksForTest;
+import org.objectscape.loomi.utils.TestUtils;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.objectscape.loomi.Loomi.startVirtual;
+import static org.objectscape.loomi.utils.TestUtils.sleep;
 
 public class ChannelTest {
 
@@ -53,16 +60,55 @@ public class ChannelTest {
     }
 
     @Test
-    public void forEach() throws InterruptedException {
-        var receivedValues = new ArrayList<Integer>();
+    public void forEach() {
+        /*
+        Taken from here: https://gobyexample.com/range-over-channels
+        Corresponds to this in Go:
+
+        package main
+
+        import "fmt"
+        import "time"
+
+        func main() {
+
+            queue := make(chan string, 2)
+            queue <- "one"
+            queue <- "two"
+            time.Sleep(1 * time.Second)
+		    queue <- "three"
+            close(queue)
+
+            for elem := range queue {
+                fmt.Println(elem)
+            }
+        }
+         */
 
         var channel = new ChannelWithHooksForTest<Integer>();
         var sendChannel = channel.sendChannel();
         var receiveChannel = channel.receiveChannel();
 
-        receiveChannel.forEach(number -> {
-
+        startVirtual(() -> {
+            sendChannel.send(1);
+            sendChannel.send(2);
+            sleep(1_000);
+            sendChannel.send(3);
+            channel.close();
         });
+
+        var elements = new ConcurrentLinkedQueue<>();
+
+        receiveChannel.forEach(number -> {
+            // Loops over receiveChannel until the channel is closed and has run empty. Waits in
+            // case channel is empty till some element is inserted or the channel is closed.
+            elements.add(number);
+        });
+
+        assertEquals(3, elements.size());
+        assertTrue(elements.contains(1));
+        assertTrue(elements.contains(2));
+        assertTrue(elements.contains(3));
     }
 
     private void consumer1(ReceiveChannel<Integer> channel, List<Integer> receivedValues) throws ChannelInterruptedException {

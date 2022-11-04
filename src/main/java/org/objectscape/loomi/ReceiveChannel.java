@@ -56,6 +56,16 @@ public class ReceiveChannel<E> extends UniDirectionalChannel<E> {
         selection.storeChannel(channel, elementConsumer, isNonEmpty);
     }
 
+    public void forEach(Consumer<? super E> action) {
+        while(true) {
+            var channelElement = receive();
+            if(channelElement.isChannelEmptyAndClosed()) {
+                return;
+            }
+            action.accept(channelElement.get());
+        }
+    }
+
     public boolean addSendListener(ChannelSelection selection) {
         channel.closedLock.readLock().lock();
 

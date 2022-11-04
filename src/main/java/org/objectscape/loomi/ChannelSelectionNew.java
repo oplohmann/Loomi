@@ -81,7 +81,7 @@ public class ChannelSelectionNew implements SendListener {
 
         if(size > 1) {
             // Which channel is picked is non-deterministic. This is important to make sure that there are no
-            // re-occurring concurrent execution pattern that could result in hidden concurrency bugs that don't
+            // re-occurring concurrent execution patterns that could result in hidden concurrency bugs that don't
             // get detected for a long time.
 
             // "The for loop starts with fresh which and result values on every iteration, and the
