@@ -1,0 +1,3 @@
+
+* Thread.startVirtualThread(...) ersetzen durch ThreadFactories, da man mit Thread.startVirtualThread(...) keinen
+Thread-Namen mitgeben kann, der für Debugging, Profiling und Logging wertvoll sein kann.
